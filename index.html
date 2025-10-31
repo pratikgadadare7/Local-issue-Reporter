@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Issue Reporter</title>
+    <title>Secure Issue Reporter - Admin Panel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+        // Initialize EmailJS with your Public Key
+        (function() {
+            emailjs.init("oM2BTI_gGQEg0q7s9"); // You'll need to replace this with your actual EmailJS public key
+        })();
+    </script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -18,6 +26,7 @@
             --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-admin: linear-gradient(135deg, #434343 0%, #000000 100%);
             --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.08);
             --shadow-medium: 0 15px 35px rgba(0, 0, 0, 0.1);
             --shadow-large: 0 25px 50px rgba(0, 0, 0, 0.15);
@@ -616,6 +625,11 @@
             color: white;
         }
         
+        .btn-admin {
+            background: var(--gradient-admin);
+            color: white;
+        }
+        
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -824,6 +838,126 @@
             background: var(--gradient-success);
         }
         
+        /* Admin Panel Styles */
+        .admin-login {
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .admin-login h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .admin-login-form {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-soft);
+        }
+        
+        .admin-panel {
+            display: none;
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .admin-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .admin-issue-item {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.2rem;
+            border-left: 5px solid var(--secondary-color);
+            box-shadow: var(--shadow-soft);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .admin-issue-item.priority-high {
+            border-left-color: var(--accent-color);
+        }
+        
+        .admin-issue-item.priority-medium {
+            border-left-color: var(--warning-color);
+        }
+        
+        .admin-issue-item.priority-low {
+            border-left-color: var(--success-color);
+        }
+        
+        .admin-issue-item:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .admin-issue-title {
+            font-weight: bold;
+            margin-bottom: 0.6rem;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .admin-issue-meta {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .admin-issue-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .admin-issue-actions {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 1.2rem;
+            flex-wrap: wrap;
+        }
+        
+        .admin-status-select {
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid #e1e8ed;
+            font-size: 0.9rem;
+            width: 150px;
+        }
+        
+        .admin-email-notification {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 1px solid #bbdefb;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            color: #1565c0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-soft);
+        }
+        
         footer {
             background: var(--gradient-primary);
             color: white;
@@ -918,6 +1052,10 @@
                 flex-direction: column;
             }
             
+            .admin-issue-actions {
+                flex-direction: column;
+            }
+            
             .btn {
                 width: 100%;
                 justify-content: center;
@@ -959,6 +1097,7 @@
                     <li><a href="#" class="nav-link active" data-target="home"><i class="fas fa-home"></i> Home</a></li>
                     <li><a href="#" class="nav-link" data-target="report"><i class="fas fa-plus-circle"></i> Report Issue</a></li>
                     <li><a href="#" class="nav-link" data-target="issues"><i class="fas fa-list-alt"></i> View Issues</a></li>
+                    <li><a href="#" class="nav-link" data-target="admin"><i class="fas fa-user-shield"></i> Admin</a></li>
                     <li><a href="#" class="nav-link" data-target="about"><i class="fas fa-info-circle"></i> About</a></li>
                 </ul>
             </nav>
@@ -1149,6 +1288,104 @@
                 </div>
             </section>
             
+            <section id="admin" class="content-section">
+                <h1 class="page-title">Admin Panel</h1>
+                
+                <div class="form-container">
+                    <div id="adminLogin" class="admin-login">
+                        <h2>Admin Login</h2>
+                        <div class="admin-login-form">
+                            <div class="form-group">
+                                <label for="adminUsername">
+                                    <i class="fas fa-user"></i>
+                                    Username
+                                </label>
+                                <input type="text" id="adminUsername" placeholder="Enter admin username">
+                            </div>
+                            <div class="form-group">
+                                <label for="adminPassword">
+                                    <i class="fas fa-key"></i>
+                                    Password
+                                </label>
+                                <input type="password" id="adminPassword" placeholder="Enter admin password">
+                            </div>
+                            <button class="submit-btn" onclick="adminLogin()">
+                                <i class="fas fa-sign-in-alt"></i>
+                                Login to Admin Panel
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="adminPanel" class="admin-panel">
+                        <div class="admin-header">
+                            <h2>Issue Management</h2>
+                            <button class="btn btn-danger" onclick="adminLogout()">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Logout
+                            </button>
+                        </div>
+                        
+                        <div class="admin-email-notification">
+                            <i class="fas fa-envelope"></i>
+                            <div>
+                                <strong>Email Notifications:</strong> All new issues are automatically sent to pratikgadadare004@gmail.com
+                            </div>
+                        </div>
+                        
+                        <div class="admin-actions">
+                            <button class="btn btn-info" onclick="refreshAdminIssues()">
+                                <i class="fas fa-sync-alt"></i>
+                                Refresh
+                            </button>
+                            <button class="btn btn-success" onclick="markAllAsReviewed()">
+                                <i class="fas fa-check-double"></i>
+                                Mark All as Reviewed
+                            </button>
+                        </div>
+                        
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label for="adminStatusFilter">
+                                    <i class="fas fa-filter"></i>
+                                    Filter by Status
+                                </label>
+                                <select id="adminStatusFilter" onchange="filterAdminIssues()">
+                                    <option value="all">All Statuses</option>
+                                    <option value="open">Open</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="resolved">Resolved</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="adminPriorityFilter">
+                                    <i class="fas fa-sort-amount-down"></i>
+                                    Filter by Priority
+                                </label>
+                                <select id="adminPriorityFilter" onchange="filterAdminIssues()">
+                                    <option value="all">All Priorities</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="adminSearchFilter">
+                                    <i class="fas fa-search"></i>
+                                    Search Issues
+                                </label>
+                                <input type="text" id="adminSearchFilter" placeholder="Search by title, description, or location..." onkeyup="filterAdminIssues()">
+                            </div>
+                        </div>
+                        
+                        <div id="adminIssuesList">
+                            <!-- Admin issues will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
             <section id="about" class="content-section">
                 <h1 class="page-title">About Secure Issue Reporter</h1>
                 
@@ -1183,18 +1420,6 @@
                                 <p>Community Manager</p>
                                 <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">User Experience & Outreach</p>
                             </div>
-                            <div class="team-member slide-in-up" style="animation-delay: 0.3s">
-                                <div class="member-photo">XY</div>
-                                <h3>XYZ</h3>
-                                <p>Community Manager</p>
-                                <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">User Experience & Outreach</p>
-                            </div>
-                            <div class="team-member slide-in-up" style="animation-delay: 0.3s">
-                                <div class="member-photo">XY</div>
-                                <h3>XYZ</h3>
-                                <p>Community Manager</p>
-                                <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">User Experience & Outreach</p>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1212,8 +1437,16 @@
     </footer>
 
     <script>
-        // The JavaScript code remains the same as in the previous implementation
-        // Only the CSS has been updated for styling and animations
+        // Admin credentials (in a real app, this would be handled server-side)
+        const ADMIN_USERNAME = "admin";
+        const ADMIN_PASSWORD = "admin123";
+        
+        // Admin email
+        const ADMIN_EMAIL = "pratikgadadare004@gmail.com";
+        
+        // Track admin login state
+        let isAdminLoggedIn = false;
+        
         let issues = JSON.parse(localStorage.getItem('issues')) || [
             {
                 id: 1,
@@ -1247,6 +1480,31 @@
             }
         ];
 
+        // Email sending function using EmailJS
+        function sendEmailToAdmin(issueData) {
+            // Replace these with your actual EmailJS details
+            const serviceID = 'service_65t6m7h';
+            const templateID = '__ejs-test-mail-service__';
+
+            emailjs.send(serviceID, templateID, {
+                to_email: ADMIN_EMAIL,
+                subject: `New Issue Reported: ${issueData.title}`,
+                reporter_name: issueData.name,
+                issue_location: issueData.location,
+                issue_priority: issueData.priority.toUpperCase(),
+                issue_description: issueData.description,
+                report_date: new Date().toLocaleString(),
+                admin_link: `${window.location.origin}${window.location.pathname}#admin`
+            })
+            .then(function(response) {
+                console.log('Email sent successfully to admin!', response.status, response.text);
+            }, function(error) {
+                console.log('Failed to send email:', error);
+                // Fallback: Show notification that email failed but issue was saved
+                console.log('Issue saved locally but email notification failed. Admin email:', ADMIN_EMAIL);
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             displayIssues();
             updateStats();
@@ -1272,7 +1530,7 @@
                     charCount.textContent = currentLength;
                     
                     if (currentLength < 10) {
-                        charCount.style.color = 'var(--danger-color)';
+                        charCount.style.color = 'var(--accent-color)';
                     } else if (currentLength > 1900) {
                         charCount.style.color = 'var(--warning-color)';
                     } else {
@@ -1328,6 +1586,9 @@
                     issues.unshift(newIssue);
                     localStorage.setItem('issues', JSON.stringify(issues));
                     
+                    // Send email to admin
+                    sendEmailToAdmin(newIssue);
+                    
                     const successMessage = document.getElementById('successMessage');
                     successMessage.classList.add('show');
                     
@@ -1358,6 +1619,12 @@
             if (sectionId === 'issues') {
                 displayIssues();
                 updateStats();
+            } else if (sectionId === 'admin') {
+                // Reset admin panel when showing it
+                document.getElementById('adminLogin').style.display = 'block';
+                document.getElementById('adminPanel').style.display = 'none';
+                document.getElementById('adminUsername').value = '';
+                document.getElementById('adminPassword').value = '';
             }
         }
         
@@ -1420,13 +1687,6 @@
                         </div>
                     </div>
                     <div class="issue-description">${escapeHtml(issue.description)}</div>
-                    <div class="issue-actions">
-                        ${issue.status !== 'in-progress' ? `<button class="btn btn-info" onclick="updateIssueStatus(${issue.id}, 'in-progress')"><i class="fas fa-play-circle"></i> Mark In Progress</button>` : ''}
-                        ${issue.status !== 'resolved' ? `<button class="btn btn-success" onclick="updateIssueStatus(${issue.id}, 'resolved')"><i class="fas fa-check-circle"></i> Mark Resolved</button>` : ''}
-                        ${issue.status !== 'closed' ? `<button class="btn btn-warning" onclick="updateIssueStatus(${issue.id}, 'closed')"><i class="fas fa-times-circle"></i> Close Issue</button>` : ''}
-                        ${issue.status === 'resolved' || issue.status === 'closed' ? `<button class="btn btn-info" onclick="updateIssueStatus(${issue.id}, 'open')"><i class="fas fa-redo"></i> Reopen Issue</button>` : ''}
-                        <button class="btn btn-danger" onclick="deleteIssue(${issue.id})"><i class="fas fa-trash-alt"></i> Delete Issue</button>
-                    </div>
                 `;
                 
                 issuesList.appendChild(issueElement);
@@ -1471,15 +1731,139 @@
             `;
         }
         
+        // Admin functions
+        function adminLogin() {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                isAdminLoggedIn = true;
+                document.getElementById('adminLogin').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                displayAdminIssues();
+            } else {
+                alert('Invalid admin credentials. Please try again.');
+            }
+        }
+        
+        function adminLogout() {
+            isAdminLoggedIn = false;
+            document.getElementById('adminLogin').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('adminUsername').value = '';
+            document.getElementById('adminPassword').value = '';
+        }
+        
+        function displayAdminIssues() {
+            const adminIssuesList = document.getElementById('adminIssuesList');
+            const statusFilter = document.getElementById('adminStatusFilter').value;
+            const priorityFilter = document.getElementById('adminPriorityFilter').value;
+            const searchFilter = document.getElementById('adminSearchFilter').value.toLowerCase();
+            
+            if (!adminIssuesList) return;
+            
+            adminIssuesList.innerHTML = '';
+            
+            const filteredIssues = issues.filter(issue => {
+                const matchesStatus = statusFilter === 'all' || issue.status === statusFilter;
+                const matchesPriority = priorityFilter === 'all' || issue.priority === priorityFilter;
+                const matchesSearch = searchFilter === '' || 
+                    issue.title.toLowerCase().includes(searchFilter) ||
+                    issue.description.toLowerCase().includes(searchFilter) ||
+                    issue.location.toLowerCase().includes(searchFilter);
+                
+                return matchesStatus && matchesPriority && matchesSearch;
+            });
+            
+            if (filteredIssues.length === 0) {
+                adminIssuesList.innerHTML = '<div class="no-issues">No issues found matching your filters.</div>';
+                return;
+            }
+            
+            filteredIssues.forEach(issue => {
+                const issueElement = document.createElement('div');
+                issueElement.className = `admin-issue-item priority-${issue.priority} fade-in`;
+                
+                const statusText = getStatusText(issue.status);
+                const statusClass = `status-${issue.status}`;
+                const statusIcon = getStatusIcon(issue.status);
+                
+                issueElement.innerHTML = `
+                    <div class="admin-issue-title">
+                        <i class="fas fa-tag"></i>
+                        ${escapeHtml(issue.title)}
+                        <span class="status-badge ${statusClass}">${statusIcon} ${statusText}</span>
+                    </div>
+                    <div class="admin-issue-meta">
+                        <div class="admin-issue-meta-item">
+                            <i class="fas fa-user"></i>
+                            <span>Reported by: ${escapeHtml(issue.name)}</span>
+                        </div>
+                        <div class="admin-issue-meta-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Location: ${escapeHtml(issue.location)}</span>
+                        </div>
+                        <div class="admin-issue-meta-item">
+                            <i class="fas fa-flag"></i>
+                            <span>Priority: ${capitalizeFirst(issue.priority)}</span>
+                        </div>
+                        <div class="admin-issue-meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>Date: ${issue.date}</span>
+                        </div>
+                    </div>
+                    <div class="issue-description">${escapeHtml(issue.description)}</div>
+                    <div class="admin-issue-actions">
+                        <select class="admin-status-select" onchange="updateIssueStatus(${issue.id}, this.value)">
+                            <option value="open" ${issue.status === 'open' ? 'selected' : ''}>Open</option>
+                            <option value="in-progress" ${issue.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="resolved" ${issue.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                            <option value="closed" ${issue.status === 'closed' ? 'selected' : ''}>Closed</option>
+                        </select>
+                        <button class="btn btn-danger" onclick="deleteIssue(${issue.id})">
+                            <i class="fas fa-trash-alt"></i> Delete Issue
+                        </button>
+                    </div>
+                `;
+                
+                adminIssuesList.appendChild(issueElement);
+            });
+        }
+        
+        function filterAdminIssues() {
+            displayAdminIssues();
+        }
+        
+        function refreshAdminIssues() {
+            displayAdminIssues();
+            alert('Admin issues refreshed!');
+        }
+        
+        function markAllAsReviewed() {
+            if (confirm('Are you sure you want to mark all open issues as in-progress?')) {
+                issues.forEach(issue => {
+                    if (issue.status === 'open') {
+                        issue.status = 'in-progress';
+                    }
+                });
+                localStorage.setItem('issues', JSON.stringify(issues));
+                displayAdminIssues();
+                alert('All open issues have been marked as in-progress!');
+            }
+        }
+        
         function updateIssueStatus(issueId, newStatus) {
-            if (confirm('Are you sure you want to update the status of this issue?')) {
-                const issueIndex = issues.findIndex(issue => issue.id === issueId);
-                if (issueIndex !== -1) {
-                    issues[issueIndex].status = newStatus;
-                    localStorage.setItem('issues', JSON.stringify(issues));
+            const issueIndex = issues.findIndex(issue => issue.id === issueId);
+            if (issueIndex !== -1) {
+                issues[issueIndex].status = newStatus;
+                localStorage.setItem('issues', JSON.stringify(issues));
+                
+                if (isAdminLoggedIn) {
+                    displayAdminIssues();
+                } else {
                     displayIssues();
-                    updateStats();
                 }
+                updateStats();
             }
         }
         
@@ -1487,7 +1871,12 @@
             if (confirm('Are you sure you want to delete this issue? This action cannot be undone.')) {
                 issues = issues.filter(issue => issue.id !== issueId);
                 localStorage.setItem('issues', JSON.stringify(issues));
-                displayIssues();
+                
+                if (isAdminLoggedIn) {
+                    displayAdminIssues();
+                } else {
+                    displayIssues();
+                }
                 updateStats();
             }
         }
