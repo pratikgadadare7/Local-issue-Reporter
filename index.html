@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Issue Reporter - Admin Panel</title>
+    <title>Secure Issue Reporter - Production Ready</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- EmailJS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script>
-        // Initialize EmailJS with your Public Key
-        (function() {
-            emailjs.init("oM2BTI_gGQEg0q7s9"); // You'll need to replace this with your actual EmailJS public key
-        })();
-    </script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -205,16 +203,6 @@
             align-items: center;
             gap: 12px;
             box-shadow: var(--shadow-soft);
-            transform: translateX(-20px);
-            opacity: 0;
-            animation: slideInRight 0.5s ease 0.3s forwards;
-        }
-        
-        @keyframes slideInRight {
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
         }
         
         .success-message {
@@ -228,8 +216,6 @@
             align-items: center;
             gap: 12px;
             box-shadow: var(--shadow-soft);
-            transform: scale(0.9);
-            transition: var(--transition);
         }
         
         .success-message.show {
@@ -285,6 +271,7 @@
         }
         
         input[type="text"],
+        input[type="password"],
         select,
         textarea {
             width: 100%;
@@ -298,12 +285,35 @@
         }
         
         input[type="text"]:focus,
+        input[type="password"]:focus,
         select:focus,
         textarea:focus {
             border-color: var(--secondary-color);
             outline: none;
             box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);
             transform: translateY(-2px);
+        }
+        
+        /* Improved Password Field */
+        .password-container {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: var(--transition);
+        }
+        
+        .toggle-password:hover {
+            color: var(--secondary-color);
         }
         
         textarea {
@@ -358,28 +368,9 @@
             overflow: hidden;
         }
         
-        .submit-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.7s ease;
-        }
-        
-        .submit-btn:hover::before {
-            left: 100%;
-        }
-        
         .submit-btn:hover {
             transform: translateY(-3px);
             box-shadow: var(--shadow-medium);
-        }
-        
-        .submit-btn:active {
-            transform: translateY(-1px);
         }
         
         hr {
@@ -399,9 +390,6 @@
             max-width: 1000px;
             margin: 0 auto;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            transform: translateY(20px);
-            opacity: 0;
-            transition: all 0.5s ease;
         }
         
         .content-section.active {
@@ -486,20 +474,6 @@
             background-clip: text;
         }
         
-        .feature-card:nth-child(2) i {
-            background: var(--gradient-secondary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .feature-card:nth-child(3) i {
-            background: var(--gradient-success);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
         .feature-card h3 {
             margin-bottom: 1rem;
             color: var(--primary-color);
@@ -525,18 +499,6 @@
             transition: var(--transition);
             position: relative;
             overflow: hidden;
-            transform: translateY(0);
-        }
-        
-        .issue-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(52, 152, 219, 0.03) 0%, transparent 100%);
-            z-index: 0;
         }
         
         .issue-item:hover {
@@ -552,8 +514,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            position: relative;
-            z-index: 1;
         }
         
         .issue-meta {
@@ -563,8 +523,6 @@
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
-            position: relative;
-            z-index: 1;
         }
         
         .issue-meta-item {
@@ -578,8 +536,6 @@
             gap: 0.8rem;
             margin-top: 1.2rem;
             flex-wrap: wrap;
-            position: relative;
-            z-index: 1;
         }
         
         .btn {
@@ -601,10 +557,6 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
         }
         
-        .btn:active {
-            transform: translateY(0);
-        }
-        
         .btn-danger {
             background: var(--gradient-secondary);
             color: white;
@@ -615,18 +567,8 @@
             color: white;
         }
         
-        .btn-warning {
-            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-            color: white;
-        }
-        
         .btn-info {
             background: var(--gradient-primary);
-            color: white;
-        }
-        
-        .btn-admin {
-            background: var(--gradient-admin);
             color: white;
         }
         
@@ -742,14 +684,6 @@
             background: var(--gradient-success);
         }
         
-        .stat-card:nth-child(4)::before {
-            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-        }
-        
-        .stat-card:nth-child(5)::before {
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-        }
-        
         .stat-card:hover {
             transform: translateY(-5px);
             box-shadow: var(--shadow-medium);
@@ -771,19 +705,6 @@
         .about-content h2 {
             margin-bottom: 1.2rem;
             color: var(--primary-color);
-            position: relative;
-            display: inline-block;
-        }
-        
-        .about-content h2::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 0;
-            width: 50px;
-            height: 3px;
-            background: var(--gradient-primary);
-            border-radius: 2px;
         }
         
         .about-content p {
@@ -828,14 +749,6 @@
             font-size: 2.2rem;
             color: white;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-        
-        .team-member:nth-child(2) .member-photo {
-            background: var(--gradient-secondary);
-        }
-        
-        .team-member:nth-child(3) .member-photo {
-            background: var(--gradient-success);
         }
         
         /* Admin Panel Styles */
@@ -884,8 +797,6 @@
             border-left: 5px solid var(--secondary-color);
             box-shadow: var(--shadow-soft);
             transition: var(--transition);
-            position: relative;
-            overflow: hidden;
         }
         
         .admin-issue-item.priority-high {
@@ -924,12 +835,6 @@
             gap: 15px;
         }
         
-        .admin-issue-meta-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
         .admin-issue-actions {
             display: flex;
             gap: 0.8rem;
@@ -958,66 +863,78 @@
             box-shadow: var(--shadow-soft);
         }
         
+        /* Database Status Indicator */
+        .db-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            gap: 10px;
+        }
+        
+        .db-status.online {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(39, 174, 96, 0.3);
+        }
+        
+        .db-status.offline {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--accent-color);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+        
+        .sync-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Loading States */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            color: var(--secondary-color);
+        }
+        
+        /* Error Messages */
+        .error-message {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 1px solid #f5c6cb;
+            border-radius: var(--border-radius);
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: #721c24;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-soft);
+        }
+        
         footer {
             background: var(--gradient-primary);
             color: white;
             text-align: center;
             padding: 2rem 0;
             margin-top: 3rem;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        footer::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,100 L100,100 L100,0 Z" fill="rgba(255,255,255,0.1)"/></svg>');
-            background-size: cover;
-        }
-        
-        footer .container {
-            position: relative;
-            z-index: 2;
         }
         
         footer a {
             color: rgba(255, 255, 255, 0.9);
             text-decoration: none;
-            transition: var(--transition);
         }
         
         footer a:hover {
             color: white;
             text-decoration: underline;
-        }
-        
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes slideInUp {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.6s ease forwards;
-        }
-        
-        .slide-in-up {
-            animation: slideInUp 0.6s ease forwards;
         }
         
         /* Responsive Design */
@@ -1065,24 +982,6 @@
                 flex-direction: column;
             }
         }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--gradient-primary);
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--secondary-color);
-        }
     </style>
 </head>
 <body>
@@ -1112,17 +1011,17 @@
                     <p>A modern, secure platform for reporting and tracking local issues in your community with advanced features and real-time updates.</p>
                     
                     <div class="feature-cards">
-                        <div class="feature-card slide-in-up" style="animation-delay: 0.1s">
+                        <div class="feature-card">
                             <i class="fas fa-lock"></i>
                             <h3>Secure Reporting</h3>
                             <p>All data is validated and encrypted for maximum security. Your privacy is our highest priority with end-to-end protection.</p>
                         </div>
-                        <div class="feature-card slide-in-up" style="animation-delay: 0.2s">
+                        <div class="feature-card">
                             <i class="fas fa-chart-line"></i>
                             <h3>Track Issues</h3>
                             <p>Monitor the status of reported issues in real-time with detailed progress tracking and status updates.</p>
                         </div>
-                        <div class="feature-card slide-in-up" style="animation-delay: 0.3s">
+                        <div class="feature-card">
                             <i class="fas fa-users"></i>
                             <h3>Community Focused</h3>
                             <p>Help improve your local area by reporting issues that matter. Collaborate with neighbors and local authorities.</p>
@@ -1144,6 +1043,11 @@
                 <h1 class="page-title">Report a Local Issue</h1>
                 
                 <div class="form-container">
+                    <div id="dbStatus" class="db-status offline">
+                        <i class="fas fa-database"></i>
+                        <span>Connecting to Database...</span>
+                    </div>
+                    
                     <div class="secure-connection">
                         <i class="fas fa-shield-alt"></i>
                         Secure Connection - All data is validated and encrypted for security
@@ -1154,8 +1058,8 @@
                     <div class="security-notice">
                         <i class="fas fa-exclamation-triangle"></i>
                         <div>
-                            <strong>Security Notice:</strong> Never include personal sensitive information in reports. 
-                            All data is publicly visible to community members.
+                            <strong>Security Notice:</strong> Your reports are completely anonymous to protect your privacy. 
+                            Never include personal sensitive information in reports.
                         </div>
                     </div>
                     
@@ -1166,15 +1070,12 @@
                         </div>
                     </div>
                     
+                    <div id="errorMessage" class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div id="errorText"></div>
+                    </div>
+                    
                     <form id="issueForm">
-                        <div class="form-group">
-                            <label for="name" class="required">
-                                <i class="fas fa-user"></i>
-                                Your Name
-                            </label>
-                            <input type="text" id="name" name="name" placeholder="Enter your full name (letters only)" required>
-                        </div>
-                        
                         <div class="form-group">
                             <label for="location" class="required">
                                 <i class="fas fa-map-marker-alt"></i>
@@ -1217,11 +1118,11 @@
                         <div class="checkbox-group">
                             <input type="checkbox" id="privacy" name="privacy" required>
                             <label for="privacy">
-                                I agree to the Privacy Policy and understand that this report may be publicly visible to community members and local authorities.
+                                I agree to the Privacy Policy and understand that this report is anonymous and publicly visible to community members and local authorities.
                             </label>
                         </div>
                         
-                        <button type="submit" class="submit-btn">
+                        <button type="submit" class="submit-btn" id="submitBtn">
                             <i class="fas fa-paper-plane"></i>
                             Submit Secure Report
                         </button>
@@ -1242,7 +1143,10 @@
                     
                     <!-- Statistics -->
                     <div class="stats" id="statsContainer">
-                        <!-- Stats will be populated by JavaScript -->
+                        <div class="loading">
+                            <i class="fas fa-spinner sync-spinner"></i>
+                            <span>Loading statistics...</span>
+                        </div>
                     </div>
                     
                     <!-- Filters -->
@@ -1283,7 +1187,10 @@
                     </div>
                     
                     <div class="issues-list" id="issuesList">
-                        <!-- Issues will be dynamically added here -->
+                        <div class="loading">
+                            <i class="fas fa-spinner sync-spinner"></i>
+                            <span>Loading issues...</span>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1307,7 +1214,12 @@
                                     <i class="fas fa-key"></i>
                                     Password
                                 </label>
-                                <input type="password" id="adminPassword" placeholder="Enter admin password">
+                                <div class="password-container">
+                                    <input type="password" id="adminPassword" placeholder="Enter admin password" required>
+                                    <button type="button" class="toggle-password" id="togglePassword">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
                             </div>
                             <button class="submit-btn" onclick="adminLogin()">
                                 <i class="fas fa-sign-in-alt"></i>
@@ -1380,7 +1292,10 @@
                         </div>
                         
                         <div id="adminIssuesList">
-                            <!-- Admin issues will be dynamically added here -->
+                            <div class="loading">
+                                <i class="fas fa-spinner sync-spinner"></i>
+                                <span>Loading admin issues...</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1402,31 +1317,19 @@
                         
                         <h2>Our Team</h2>
                         <div class="team-members">
-                            <div class="team-member slide-in-up" style="animation-delay: 0.1s">
+                            <div class="team-member">
                                 <div class="member-photo">PG</div>
                                 <h3>Pratik Gadadare</h3>
                                 <p>Developer</p>
                                 <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">Security & Infrastructure</p>
                             </div>
-                            <div class="team-member slide-in-up" style="animation-delay: 0.2s">
+                            <div class="team-member">
                                 <div class="member-photo">RA</div>
                                 <h3>Rushikesh Anuse</h3>
                                 <p>Security Lead</p>
                                 <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">Cybersecurity & Encryption</p>
                             </div>
-                            <div class="team-member slide-in-up" style="animation-delay: 0.3s">
-                                <div class="member-photo">SP</div>
-                                <h3>Soham Patil</h3>
-                                <p>Community Manager</p>
-                                <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">User Experience & Outreach</p>
-                            </div>
-                            <div class="team-member slide-in-up" style="animation-delay: 0.3s">
-                                <div class="member-photo">SP</div>
-                                <h3>Soham Patil</h3>
-                                <p>Community Manager</p>
-                                <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">User Experience & Outreach</p>
-                            </div>
-                            <div class="team-member slide-in-up" style="animation-delay: 0.3s">
+                            <div class="team-member">
                                 <div class="member-photo">SP</div>
                                 <h3>Soham Patil</h3>
                                 <p>Community Manager</p>
@@ -1449,78 +1352,226 @@
     </footer>
 
     <script>
-        // Admin credentials (in a real app, this would be handled server-side)
+        // Application State
+        let issues = [];
+        let isAdminLoggedIn = false;
+        let dbInitialized = false;
+        let unsubscribeIssues = null;
+        
+        // Admin credentials
         const ADMIN_USERNAME = "admin";
         const ADMIN_PASSWORD = "admin123";
-        
-        // Admin email
         const ADMIN_EMAIL = "pratikgadadare004@gmail.com";
         
-        // Track admin login state
-        let isAdminLoggedIn = false;
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDikaZhBS1Ra0oonREv4z8QEPBD-hqKFgU",
+            authDomain: "local-issue-platform.firebaseapp.com",
+            projectId: "local-issue-platform",
+            storageBucket: "local-issue-platform.firebasestorage.app",
+            messagingSenderId: "198800362429",
+            appId: "1:198800362429:web:8e0a0d1d0fc305e5f120d4",
+            measurementId: "G-2HZZV0ZMH6"
+        };
         
-        let issues = JSON.parse(localStorage.getItem('issues')) || [
-            {
-                id: 1,
-                name: "John Smith",
-                location: "Downtown",
-                title: "Broken Traffic Light at Main & 5th",
-                description: "The traffic light at the intersection of Main Street and 5th Avenue is completely out, creating dangerous driving conditions during rush hour.",
-                priority: "high",
-                status: "open",
-                date: "2023-10-15"
-            },
-            {
-                id: 2,
-                name: "Sarah Johnson",
-                location: "Residential Area",
-                title: "Pothole on Oak Avenue",
-                description: "Large pothole developing on Oak Avenue between Elm and Maple streets. It's becoming deeper with each rain.",
-                priority: "medium",
-                status: "in-progress",
-                date: "2023-10-12"
-            },
-            {
-                id: 3,
-                name: "Robert Chen",
-                location: "Parkview Neighborhood",
-                title: "Overgrown Bushes Obstructing Sidewalk",
-                description: "Bushes from a private property are overgrown and obstructing the sidewalk, forcing pedestrians to walk on the road.",
-                priority: "low",
-                status: "resolved",
-                date: "2023-10-10"
-            }
-        ];
-
-        // Email sending function using EmailJS
-        function sendEmailToAdmin(issueData) {
-            // Replace these with your actual EmailJS details
-            const serviceID = 'service_65t6m7h';
-            const templateID = '__ejs-test-mail-service__';
-
-            emailjs.send(serviceID, templateID, {
-                to_email: ADMIN_EMAIL,
-                subject: `New Issue Reported: ${issueData.title}`,
-                reporter_name: issueData.name,
-                issue_location: issueData.location,
-                issue_priority: issueData.priority.toUpperCase(),
-                issue_description: issueData.description,
-                report_date: new Date().toLocaleString(),
-                admin_link: `${window.location.origin}${window.location.pathname}#admin`
-            })
-            .then(function(response) {
-                console.log('Email sent successfully to admin!', response.status, response.text);
-            }, function(error) {
-                console.log('Failed to send email:', error);
-                // Fallback: Show notification that email failed but issue was saved
-                console.log('Issue saved locally but email notification failed. Admin email:', ADMIN_EMAIL);
-            });
+        // Initialize Firebase
+        let firebaseApp;
+        let db;
+        
+        try {
+            firebaseApp = firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            console.log("Firebase initialized successfully");
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
         }
-
+        
+        // Initialize EmailJS with your Public Key
+        (function() {
+            emailjs.init("oM2BTI_gGQEg0q7s9"); // Replace with your actual EmailJS public key
+            console.log("EmailJS initialized");
+        })();
+        
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            displayIssues();
-            updateStats();
+            initializeDatabase();
+            setupEventListeners();
+            setupPasswordToggle();
+        });
+        
+        // Setup password visibility toggle
+        function setupPasswordToggle() {
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('adminPassword');
             
+            if (togglePassword && passwordInput) {
+                togglePassword.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    
+                    // Toggle eye icon
+                    const icon = this.querySelector('i');
+                    if (type === 'password') {
+                        icon.className = 'fas fa-eye';
+                    } else {
+                        icon.className = 'fas fa-eye-slash';
+                    }
+                });
+            }
+        }
+        
+        // Initialize Firebase Database
+        async function initializeDatabase() {
+            try {
+                if (!db) {
+                    throw new Error("Firebase not available");
+                }
+                
+                // Update UI to show connected status
+                updateDbStatus(true);
+                dbInitialized = true;
+                
+                // Set up real-time listener for issues
+                setupIssuesListener();
+                
+                console.log("Firebase database initialized successfully");
+            } catch (error) {
+                console.error("Failed to initialize database:", error);
+                updateDbStatus(false);
+                showError("Database connection failed. Using offline mode.");
+            }
+        }
+        
+        // Set up real-time listener for issues
+        function setupIssuesListener() {
+            if (!db) return;
+            
+            // Unsubscribe from previous listener if exists
+            if (unsubscribeIssues) {
+                unsubscribeIssues();
+            }
+            
+            // Set up real-time listener
+            unsubscribeIssues = db.collection('issues')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    issues = [];
+                    snapshot.forEach(doc => {
+                        const issue = doc.data();
+                        issue.id = doc.id;
+                        issues.push(issue);
+                    });
+                    
+                    console.log(`Real-time update: ${issues.length} issues loaded`);
+                    
+                    // Update UI
+                    displayIssues();
+                    updateStats();
+                    
+                    // If we're in admin panel and admin is logged in, update admin view too
+                    if (isAdminLoggedIn && document.getElementById('adminPanel').style.display !== 'none') {
+                        displayAdminIssues();
+                    }
+                }, error => {
+                    console.error("Error in real-time listener:", error);
+                    updateDbStatus(false);
+                });
+        }
+        
+        // Update database status indicator
+        function updateDbStatus(online) {
+            const dbStatus = document.getElementById('dbStatus');
+            if (dbStatus) {
+                if (online) {
+                    dbStatus.className = 'db-status online';
+                    dbStatus.innerHTML = '<i class="fas fa-database"></i><span>Connected to Cloud Database</span><span style="margin-left: 10px;"><i class="fas fa-sync-alt sync-spinner"></i> Live</span>';
+                } else {
+                    dbStatus.className = 'db-status offline';
+                    dbStatus.innerHTML = '<i class="fas fa-database"></i><span>Offline Mode - Data may not be saved</span>';
+                }
+            }
+        }
+        
+        // Show error message
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            
+            if (errorEl && errorText) {
+                errorText.textContent = message;
+                errorEl.style.display = 'flex';
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    errorEl.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Hide error message
+        function hideError() {
+            const errorEl = document.getElementById('errorMessage');
+            if (errorEl) {
+                errorEl.style.display = 'none';
+            }
+        }
+        
+        // Save issue to Firebase
+        async function saveIssue(issue) {
+            if (!dbInitialized) {
+                throw new Error("Database not initialized");
+            }
+            
+            try {
+                // Add timestamp
+                issue.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                issue.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+                
+                // Save to Firestore
+                const docRef = await db.collection('issues').add(issue);
+                console.log("Issue saved to Firebase with ID:", docRef.id);
+                
+                return docRef.id;
+            } catch (error) {
+                console.error("Error saving issue to Firebase:", error);
+                throw error;
+            }
+        }
+        
+        // Update issue in Firebase
+        async function updateIssue(issueId, updates) {
+            if (!dbInitialized) {
+                throw new Error("Database not initialized");
+            }
+            
+            try {
+                updates.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+                
+                await db.collection('issues').doc(issueId).update(updates);
+                console.log("Issue updated in Firebase");
+            } catch (error) {
+                console.error("Error updating issue in Firebase:", error);
+                throw error;
+            }
+        }
+        
+        // Delete issue from Firebase
+        async function deleteIssueFromDb(issueId) {
+            if (!dbInitialized) {
+                throw new Error("Database not initialized");
+            }
+            
+            try {
+                await db.collection('issues').doc(issueId).delete();
+                console.log("Issue deleted from Firebase");
+            } catch (error) {
+                console.error("Error deleting issue from Firebase:", error);
+                throw error;
+            }
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
             const navLinks = document.querySelectorAll('.nav-link');
             navLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
@@ -1553,102 +1604,94 @@
             
             const issueForm = document.getElementById('issueForm');
             if (issueForm) {
-                issueForm.addEventListener('submit', function(e) {
+                issueForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
-                    const name = document.getElementById('name').value;
-                    const location = document.getElementById('location').value;
-                    const title = document.getElementById('title').value;
-                    const description = document.getElementById('description').value;
-                    const priority = document.getElementById('priority').value;
-                    const privacy = document.getElementById('privacy').checked;
+                    // Show loading state
+                    const submitBtn = document.getElementById('submitBtn');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner sync-spinner"></i> Submitting...';
+                    submitBtn.disabled = true;
                     
-                    const nameRegex = /^[A-Za-z\s]+$/;
-                    if (!nameRegex.test(name)) {
-                        alert('Please enter a valid name (letters and spaces only)');
-                        return;
+                    // Hide any previous errors
+                    hideError();
+                    
+                    try {
+                        const location = document.getElementById('location').value;
+                        const title = document.getElementById('title').value;
+                        const description = document.getElementById('description').value;
+                        const priority = document.getElementById('priority').value;
+                        const privacy = document.getElementById('privacy').checked;
+                        
+                        // Validation
+                        if (description.length < 10) {
+                            throw new Error('Description must be at least 10 characters long');
+                        }
+                        
+                        if (!priority) {
+                            throw new Error('Please select a priority level');
+                        }
+                        
+                        if (!privacy) {
+                            throw new Error('You must agree to the Privacy Policy');
+                        }
+                        
+                        const newIssue = {
+                            location: location,
+                            title: title,
+                            description: description,
+                            priority: priority,
+                            status: "open",
+                            date: new Date().toISOString().split('T')[0]
+                        };
+                        
+                        // Save to database
+                        await saveIssue(newIssue);
+                        
+                        // Send email to admin
+                        await sendEmailToAdmin(newIssue);
+                        
+                        // Show success message
+                        const successMessage = document.getElementById('successMessage');
+                        successMessage.classList.add('show');
+                        
+                        // Clear form for next report
+                        issueForm.reset();
+                        if (charCount) {
+                            charCount.textContent = '0';
+                            charCount.style.color = '#666';
+                        }
+                        
+                        // Hide success message after 5 seconds
+                        setTimeout(() => {
+                            successMessage.classList.remove('show');
+                        }, 5000);
+                    } catch (error) {
+                        console.error("Error submitting issue:", error);
+                        showError(error.message || "Failed to submit issue. Please try again.");
+                    } finally {
+                        // Reset button state
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                     }
-                    
-                    if (description.length < 10) {
-                        alert('Description must be at least 10 characters long');
-                        return;
-                    }
-                    
-                    if (!priority) {
-                        alert('Please select a priority level');
-                        return;
-                    }
-                    
-                    if (!privacy) {
-                        alert('You must agree to the Privacy Policy');
-                        return;
-                    }
-                    
-                    const newIssue = {
-                        id: Date.now(),
-                        name: name,
-                        location: location,
-                        title: title,
-                        description: description,
-                        priority: priority,
-                        status: "open",
-                        date: new Date().toISOString().split('T')[0]
-                    };
-                    
-                    issues.unshift(newIssue);
-                    localStorage.setItem('issues', JSON.stringify(issues));
-                    
-                    // Send email to admin
-                    sendEmailToAdmin(newIssue);
-                    
-                    const successMessage = document.getElementById('successMessage');
-                    successMessage.classList.add('show');
-                    
-                    issueForm.reset();
-                    if (charCount) {
-                        charCount.textContent = '0';
-                        charCount.style.color = '#666';
-                    }
-                    
-                    displayIssues();
-                    updateStats();
-                    
-                    setTimeout(() => {
-                        successMessage.classList.remove('show');
-                    }, 5000);
                 });
-            }
-        });
-        
-        function showSection(sectionId) {
-            const sections = document.querySelectorAll('.content-section');
-            sections.forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            document.getElementById(sectionId).classList.add('active');
-            
-            if (sectionId === 'issues') {
-                displayIssues();
-                updateStats();
-            } else if (sectionId === 'admin') {
-                // Reset admin panel when showing it
-                document.getElementById('adminLogin').style.display = 'block';
-                document.getElementById('adminPanel').style.display = 'none';
-                document.getElementById('adminUsername').value = '';
-                document.getElementById('adminPassword').value = '';
             }
         }
         
+        // Display issues in the public view
         function displayIssues() {
             const issuesList = document.getElementById('issuesList');
-            const statusFilter = document.getElementById('statusFilter').value;
-            const priorityFilter = document.getElementById('priorityFilter').value;
-            const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+            const priorityFilter = document.getElementById('priorityFilter')?.value || 'all';
+            const searchFilter = document.getElementById('searchFilter')?.value.toLowerCase() || '';
             
             if (!issuesList) return;
             
-            issuesList.innerHTML = '';
+            // Show loading if no issues yet
+            if (issues.length === 0) {
+                issuesList.innerHTML = '<div class="no-issues">No issues reported yet. <a href="#" onclick="showSection(\'report\')">Be the first to report an issue</a>.</div>';
+                return;
+            }
             
             const filteredIssues = issues.filter(issue => {
                 const matchesStatus = statusFilter === 'all' || issue.status === statusFilter;
@@ -1666,9 +1709,11 @@
                 return;
             }
             
+            issuesList.innerHTML = '';
+            
             filteredIssues.forEach(issue => {
                 const issueElement = document.createElement('div');
-                issueElement.className = `issue-item priority-${issue.priority} fade-in`;
+                issueElement.className = `issue-item priority-${issue.priority}`;
                 
                 const statusText = getStatusText(issue.status);
                 const statusClass = `status-${issue.status}`;
@@ -1681,10 +1726,6 @@
                         <span class="status-badge ${statusClass}">${statusIcon} ${statusText}</span>
                     </div>
                     <div class="issue-meta">
-                        <div class="issue-meta-item">
-                            <i class="fas fa-user"></i>
-                            <span>Reported by: ${escapeHtml(issue.name)}</span>
-                        </div>
                         <div class="issue-meta-item">
                             <i class="fas fa-map-marker-alt"></i>
                             <span>Location: ${escapeHtml(issue.location)}</span>
@@ -1705,10 +1746,95 @@
             });
         }
         
+        // Display issues in admin panel
+        function displayAdminIssues() {
+            const adminIssuesList = document.getElementById('adminIssuesList');
+            const statusFilter = document.getElementById('adminStatusFilter')?.value || 'all';
+            const priorityFilter = document.getElementById('adminPriorityFilter')?.value || 'all';
+            const searchFilter = document.getElementById('adminSearchFilter')?.value.toLowerCase() || '';
+            
+            if (!adminIssuesList) return;
+            
+            // Show loading if no issues yet
+            if (issues.length === 0) {
+                adminIssuesList.innerHTML = '<div class="no-issues">No issues reported yet.</div>';
+                return;
+            }
+            
+            const filteredIssues = issues.filter(issue => {
+                const matchesStatus = statusFilter === 'all' || issue.status === statusFilter;
+                const matchesPriority = priorityFilter === 'all' || issue.priority === priorityFilter;
+                const matchesSearch = searchFilter === '' || 
+                    issue.title.toLowerCase().includes(searchFilter) ||
+                    issue.description.toLowerCase().includes(searchFilter) ||
+                    issue.location.toLowerCase().includes(searchFilter);
+                
+                return matchesStatus && matchesPriority && matchesSearch;
+            });
+            
+            if (filteredIssues.length === 0) {
+                adminIssuesList.innerHTML = '<div class="no-issues">No issues found matching your filters.</div>';
+                return;
+            }
+            
+            adminIssuesList.innerHTML = '';
+            
+            filteredIssues.forEach(issue => {
+                const issueElement = document.createElement('div');
+                issueElement.className = `admin-issue-item priority-${issue.priority}`;
+                
+                const statusText = getStatusText(issue.status);
+                const statusClass = `status-${issue.status}`;
+                const statusIcon = getStatusIcon(issue.status);
+                
+                issueElement.innerHTML = `
+                    <div class="admin-issue-title">
+                        <i class="fas fa-tag"></i>
+                        ${escapeHtml(issue.title)}
+                        <span class="status-badge ${statusClass}">${statusIcon} ${statusText}</span>
+                    </div>
+                    <div class="admin-issue-meta">
+                        <div class="admin-issue-meta-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Location: ${escapeHtml(issue.location)}</span>
+                        </div>
+                        <div class="admin-issue-meta-item">
+                            <i class="fas fa-flag"></i>
+                            <span>Priority: ${capitalizeFirst(issue.priority)}</span>
+                        </div>
+                        <div class="admin-issue-meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>Date: ${issue.date}</span>
+                        </div>
+                    </div>
+                    <div class="issue-description">${escapeHtml(issue.description)}</div>
+                    <div class="admin-issue-actions">
+                        <select class="admin-status-select" onchange="updateIssueStatus('${issue.id}', this.value)">
+                            <option value="open" ${issue.status === 'open' ? 'selected' : ''}>Open</option>
+                            <option value="in-progress" ${issue.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="resolved" ${issue.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                            <option value="closed" ${issue.status === 'closed' ? 'selected' : ''}>Closed</option>
+                        </select>
+                        <button class="btn btn-danger" onclick="deleteIssue('${issue.id}')">
+                            <i class="fas fa-trash-alt"></i> Delete Issue
+                        </button>
+                    </div>
+                `;
+                
+                adminIssuesList.appendChild(issueElement);
+            });
+        }
+        
+        // Filter functions
         function filterIssues() {
             displayIssues();
         }
         
+        function filterAdminIssues() {
+            displayAdminIssues();
+        }
+        
+        // Update statistics
         function updateStats() {
             const statsContainer = document.getElementById('statsContainer');
             if (!statsContainer) return;
@@ -1720,23 +1846,23 @@
             const closed = issues.filter(issue => issue.status === 'closed').length;
             
             statsContainer.innerHTML = `
-                <div class="stat-card slide-in-up" style="animation-delay: 0.1s">
+                <div class="stat-card">
                     <div class="stat-number">${total}</div>
                     <div class="stat-label">Total Issues</div>
                 </div>
-                <div class="stat-card slide-in-up" style="animation-delay: 0.2s">
+                <div class="stat-card">
                     <div class="stat-number">${open}</div>
                     <div class="stat-label">Open</div>
                 </div>
-                <div class="stat-card slide-in-up" style="animation-delay: 0.3s">
+                <div class="stat-card">
                     <div class="stat-number">${inProgress}</div>
                     <div class="stat-label">In Progress</div>
                 </div>
-                <div class="stat-card slide-in-up" style="animation-delay: 0.4s">
+                <div class="stat-card">
                     <div class="stat-number">${resolved}</div>
                     <div class="stat-label">Resolved</div>
                 </div>
-                <div class="stat-card slide-in-up" style="animation-delay: 0.5s">
+                <div class="stat-card">
                     <div class="stat-number">${closed}</div>
                     <div class="stat-label">Closed</div>
                 </div>
@@ -1766,133 +1892,116 @@
             document.getElementById('adminPassword').value = '';
         }
         
-        function displayAdminIssues() {
-            const adminIssuesList = document.getElementById('adminIssuesList');
-            const statusFilter = document.getElementById('adminStatusFilter').value;
-            const priorityFilter = document.getElementById('adminPriorityFilter').value;
-            const searchFilter = document.getElementById('adminSearchFilter').value.toLowerCase();
-            
-            if (!adminIssuesList) return;
-            
-            adminIssuesList.innerHTML = '';
-            
-            const filteredIssues = issues.filter(issue => {
-                const matchesStatus = statusFilter === 'all' || issue.status === statusFilter;
-                const matchesPriority = priorityFilter === 'all' || issue.priority === priorityFilter;
-                const matchesSearch = searchFilter === '' || 
-                    issue.title.toLowerCase().includes(searchFilter) ||
-                    issue.description.toLowerCase().includes(searchFilter) ||
-                    issue.location.toLowerCase().includes(searchFilter);
-                
-                return matchesStatus && matchesPriority && matchesSearch;
-            });
-            
-            if (filteredIssues.length === 0) {
-                adminIssuesList.innerHTML = '<div class="no-issues">No issues found matching your filters.</div>';
-                return;
-            }
-            
-            filteredIssues.forEach(issue => {
-                const issueElement = document.createElement('div');
-                issueElement.className = `admin-issue-item priority-${issue.priority} fade-in`;
-                
-                const statusText = getStatusText(issue.status);
-                const statusClass = `status-${issue.status}`;
-                const statusIcon = getStatusIcon(issue.status);
-                
-                issueElement.innerHTML = `
-                    <div class="admin-issue-title">
-                        <i class="fas fa-tag"></i>
-                        ${escapeHtml(issue.title)}
-                        <span class="status-badge ${statusClass}">${statusIcon} ${statusText}</span>
-                    </div>
-                    <div class="admin-issue-meta">
-                        <div class="admin-issue-meta-item">
-                            <i class="fas fa-user"></i>
-                            <span>Reported by: ${escapeHtml(issue.name)}</span>
-                        </div>
-                        <div class="admin-issue-meta-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>Location: ${escapeHtml(issue.location)}</span>
-                        </div>
-                        <div class="admin-issue-meta-item">
-                            <i class="fas fa-flag"></i>
-                            <span>Priority: ${capitalizeFirst(issue.priority)}</span>
-                        </div>
-                        <div class="admin-issue-meta-item">
-                            <i class="fas fa-calendar"></i>
-                            <span>Date: ${issue.date}</span>
-                        </div>
-                    </div>
-                    <div class="issue-description">${escapeHtml(issue.description)}</div>
-                    <div class="admin-issue-actions">
-                        <select class="admin-status-select" onchange="updateIssueStatus(${issue.id}, this.value)">
-                            <option value="open" ${issue.status === 'open' ? 'selected' : ''}>Open</option>
-                            <option value="in-progress" ${issue.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
-                            <option value="resolved" ${issue.status === 'resolved' ? 'selected' : ''}>Resolved</option>
-                            <option value="closed" ${issue.status === 'closed' ? 'selected' : ''}>Closed</option>
-                        </select>
-                        <button class="btn btn-danger" onclick="deleteIssue(${issue.id})">
-                            <i class="fas fa-trash-alt"></i> Delete Issue
-                        </button>
-                    </div>
-                `;
-                
-                adminIssuesList.appendChild(issueElement);
-            });
-        }
-        
-        function filterAdminIssues() {
-            displayAdminIssues();
-        }
-        
         function refreshAdminIssues() {
             displayAdminIssues();
             alert('Admin issues refreshed!');
         }
         
-        function markAllAsReviewed() {
+        async function markAllAsReviewed() {
             if (confirm('Are you sure you want to mark all open issues as in-progress?')) {
-                issues.forEach(issue => {
-                    if (issue.status === 'open') {
-                        issue.status = 'in-progress';
-                    }
-                });
-                localStorage.setItem('issues', JSON.stringify(issues));
-                displayAdminIssues();
-                alert('All open issues have been marked as in-progress!');
-            }
-        }
-        
-        function updateIssueStatus(issueId, newStatus) {
-            const issueIndex = issues.findIndex(issue => issue.id === issueId);
-            if (issueIndex !== -1) {
-                issues[issueIndex].status = newStatus;
-                localStorage.setItem('issues', JSON.stringify(issues));
-                
-                if (isAdminLoggedIn) {
-                    displayAdminIssues();
-                } else {
-                    displayIssues();
+                try {
+                    const updates = [];
+                    issues.forEach(issue => {
+                        if (issue.status === 'open') {
+                            updates.push(updateIssue(issue.id, { status: 'in-progress' }));
+                        }
+                    });
+                    
+                    await Promise.all(updates);
+                    alert('All open issues have been marked as in-progress!');
+                } catch (error) {
+                    console.error("Error updating issues:", error);
+                    showError("Failed to update some issues. Please try again.");
                 }
-                updateStats();
             }
         }
         
-        function deleteIssue(issueId) {
+        async function updateIssueStatus(issueId, newStatus) {
+            try {
+                await updateIssue(issueId, { status: newStatus });
+            } catch (error) {
+                console.error("Error updating issue status:", error);
+                showError("Failed to update issue status. Please try again.");
+            }
+        }
+        
+        async function deleteIssue(issueId) {
             if (confirm('Are you sure you want to delete this issue? This action cannot be undone.')) {
-                issues = issues.filter(issue => issue.id !== issueId);
-                localStorage.setItem('issues', JSON.stringify(issues));
-                
-                if (isAdminLoggedIn) {
-                    displayAdminIssues();
-                } else {
-                    displayIssues();
+                try {
+                    await deleteIssueFromDb(issueId);
+                } catch (error) {
+                    console.error("Error deleting issue:", error);
+                    showError("Failed to delete issue. Please try again.");
                 }
-                updateStats();
             }
         }
         
+        // Navigation
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            document.getElementById(sectionId).classList.add('active');
+            
+            if (sectionId === 'issues') {
+                displayIssues();
+                updateStats();
+            } else if (sectionId === 'admin') {
+                // Reset admin panel when showing it
+                document.getElementById('adminLogin').style.display = 'block';
+                document.getElementById('adminPanel').style.display = 'none';
+                document.getElementById('adminUsername').value = '';
+                document.getElementById('adminPassword').value = '';
+            }
+        }
+        
+        // Email sending function using EmailJS
+        async function sendEmailToAdmin(issueData) {
+            try {
+                const templateParams = {
+                    to_email: ADMIN_EMAIL,
+                    from_name: 'Issue Reporter System',
+                    subject: `New Issue Reported: ${issueData.title}`,
+                    message: `
+                        A new issue has been reported in your community:
+                        
+                        Location: ${issueData.location}
+                        Title: ${issueData.title}
+                        Priority: ${issueData.priority.toUpperCase()}
+                        Description: ${issueData.description}
+                        
+                        Date Reported: ${new Date().toLocaleString()}
+                        
+                        Please log in to the admin panel to review this issue.
+                    `,
+                    reply_to: 'noreply@issuereporter.com'
+                };
+
+                // Use default EmailJS service and template
+                const response = await emailjs.send(
+                    'default_service', 
+                    'template_default', 
+                    templateParams
+                );
+                
+                console.log('Email sent successfully to admin!', response.status, response.text);
+                return true;
+            } catch (error) {
+                console.log('Failed to send email:', error);
+                // Don't throw error - we don't want email failure to prevent issue submission
+                // You can check the console for detailed error information
+                console.log('EmailJS Error Details:', {
+                    serviceId: 'service_65t6m7h',
+                    templateId: 'template_70higwf',
+                    error: error
+                });
+                return false;
+            }
+        }
+        
+        // Utility functions
         function getStatusText(status) {
             const statusMap = {
                 'open': 'Open',
